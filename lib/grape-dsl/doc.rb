@@ -219,11 +219,11 @@ module Grape
     ## For the method use
     #
     ## for a targeted specified class
-    #Grape.create_ppt_doc target_class: REST::API,
+    #Grape.create_redmine_wiki_doc target_class: REST::API,
     #                    path: File.expand_path(File.join(File.dirname(__FILE__),"test_file.txt"))
     #
     ## for all grape subclass (directs and indirects)
-    #Grape.create_ppt_doc path: File.expand_path(File.join(File.dirname(__FILE__),"test_file.txt"))
+    #Grape.create_redmine_wiki_doc path: File.expand_path(File.join(File.dirname(__FILE__),"test_file.txt"))
     #
     def create_redmine_wiki_doc(*args)
 
