@@ -56,8 +56,12 @@ end
 module Grape
   class << self
 
+    def syntax_highlight target,wrapper_begin,wrapper_end
+      return "#{wrapper_begin}#{target}#{wrapper_end}"
+    end
+
     # helpers for doc generation
-    def redmine_body(route)
+    def wiki_body(route,wrapper_begin,wrapper_end,wrapper_close)
 
       description_key= :body
       tmp_array= Array.new()
@@ -143,7 +147,7 @@ module Grape
 
 
 
-            tmp_array.push("<pre><code class=\"#{content_type.to_s.upcase}\">")
+            tmp_array.push syntax_highlight(content_type.to_s,wrapper_begin,wrapper_end)
 
             require "json"
 
@@ -160,16 +164,12 @@ module Grape
             formatted_string.gsub!(/^"/," \"")
 
             tmp_array.push formatted_string
-            tmp_array.push("</code></pre>")
+            tmp_array.push wrapper_close
           end
 
         when "txt"
           begin
-
-            tmp_array.push("<pre>")
             tmp_array.push(params.inspect)
-            tmp_array.push("</pre>")
-
           end
 
 
@@ -225,7 +225,7 @@ module Grape
     ## for all grape subclass (directs and indirects)
     #Grape.create_redmine_wiki_doc path: File.expand_path(File.join(File.dirname(__FILE__),"test_file.txt"))
     #
-    def create_redmine_wiki_doc(*args)
+    def create_wiki_doc(*args)
 
       # default set in args
       begin
@@ -254,24 +254,85 @@ module Grape
           end
         end
 
-
+        args[:type] ||= args[:doc_type]
+        args[:type] ||= 'wiki'
 
         #args[:path],
         #args[:extra_desc_file]
         #args[:target_class]
+        #args[:type]
+
+      end
+
+
+      # defaults
+      begin
+
+        uni_tab= ""
+        case args[:type].to_s.downcase
+
+          when "redmine","redmine_wiki","redmine-wiki","redminewiki"
+            begin
+
+              mid_tab= " "*3
+
+              bsym= "*"
+              isym= "_"
+
+              htsym= "* "
+              mtsym= htsym[0]*2 +" "
+              stsym= htsym[0]*3 +" "
+
+              hheader= "h3. "
+              mheader= "h4. "
+              sheader= "h5. "
+
+              container_markup_begin= "<pre><code class=\""
+              container_markup_end=   "\">"
+              container_markup_close= "</code></pre>"
+
+            end
+
+          when "github","wiki","md"
+            begin
+
+              mid_tab= " "*3
+
+              bsym= "*"
+              isym= "_"
+
+              htsym= "* "
+              mtsym= htsym[0]*2 +" "
+              stsym= htsym[0]*3 +" "
+
+              hheader= "# "
+              mheader= hheader[0]*2 +" "
+              sheader= hheader[0]*3 +" "
+
+              container_markup_begin= "```"
+              container_markup_end=   ""
+              container_markup_close= "```"
+
+            end
+
+          else
+            raise ArgumentError, "invalid :type has been set, try github or redmine"
+
+        end
 
       end
 
       # site name
       begin
         write_out_array = Array.new
-        write_out_array.push "h1. Database Rest Control Layer Documentation\n"
-        write_out_array.push "h2. REST application routes:\n"
+        write_out_array.push "#{hheader}Database Rest Control Layer Documentation\n"
+        write_out_array.push "#{mheader}REST application routes:\n"
       end
+
 
       # description
       begin
-        write_out_array.push  "h3. this is the documentation for #{$0} rest calls\n\n"+
+        write_out_array.push  "#{sheader}this is the documentation for #{$0} rest calls\n\n"+
                                   "  the main function is to create a control layer to the database,\n"+
                                   "with interactive commands, that can handle multiple way from ask requests,\n"+
                                   "like regexp search by string, or different parameters for an array ask,\n"+
@@ -280,7 +341,7 @@ module Grape
                                   "like read from db, create in the db or update in the db by xy params, and how.\n"
 
         args[:desc_files].each do |extra_desc_file_path|
-          write_out_array.push "h3. #{extra_desc_file_path.split(File::Separator).last.split('.')[0].downcase.capitalize}\n"
+          write_out_array.push "#{sheader}#{extra_desc_file_path.split(File::Separator).last.split('.')[0].downcase.capitalize}\n"
           write_out_array.push "<pre>"
           write_out_array.push File.open(extra_desc_file_path,"r").read
           write_out_array.push "</pre>\n"
@@ -291,7 +352,6 @@ module Grape
       begin
         write_out_array.push "\n{{>toc}}\n"
       end
-
 
       # classes array
       begin
@@ -312,27 +372,8 @@ module Grape
         next if Grape::API == rest_api_model
         rest_api_model.routes.map do |route|
 
-          # defaults
-          begin
 
-            uni_tab= " "*0
-            mid_tab= " "*3
-
-            bsym= "*"
-            isym= "_"
-
-            htsym= "* "
-            mtsym= "** "
-            stsym= "*** "
-
-            hheader= "h3. "
-            mheader= "h4. "
-            sheader= "h5. "
-            method_name= "#{hheader}Request: #{route.route_path} call: #{route.route_method.to_s.downcase} part"
-
-
-
-          end
+          method_name= "#{hheader}Request: #{route.route_path} call: #{route.route_method.to_s.downcase} part"
 
           # check that does the method already in the documentation
           unless write_out_array.include?(method_name)
@@ -395,20 +436,6 @@ module Grape
                 write_out_array.push ""
               end
 
-              # create request type for code format class
-              # create request body contents
-              #begin
-              #  if rest_api_model.content_types.count == 1
-              #    write_out_array.push((uni_tab*2)+"#{htsym}*body:*")
-              #
-              #    redmine_body(rest_api_model,route).each do |one_element|
-              #      write_out_array.push one_element
-              #    end
-              #
-              #  end
-              #  write_out_array.push ""
-              #end
-
               # parameters
               begin
                 new_docs_element= Array.new
@@ -442,21 +469,26 @@ module Grape
                 write_out_array.push("\n#{mheader}response\n")
               end
 
-              # create route content_type
+              #create route content_type
               begin
-                write_out_array.push((uni_tab*2)+"#{htsym}#{bsym}headers:#{bsym}#{mid_tab}")
-                rest_api_model.content_types.each do |one_format_type,one_format_header|
-                  write_out_array.push "#{mtsym}#{uni_tab*2}#{one_format_header}"
-                end
+                if !Grape::Endpoint.config_obj.nil?
 
-                write_out_array.push ""
+                  write_out_array.push((uni_tab*2)+"#{sheader}Extra headers:")
+
+                  Grape::Endpoint.header_config_obj.each do |header_key,header_value|
+                    write_out_array.push "#{htsym}#{header_key}: #{header_value.join(', ')}"
+                  end
+
+                  write_out_array.push ""
+
+                end
               end
 
               # create response bodies
               begin
                 #TODO check out why not working normaly with evry path!
-                write_out_array.push((uni_tab*2)+"#{htsym}*body:*")
-                redmine_body(route).each do |one_element|
+                write_out_array.push((uni_tab*2)+"#{sheader}*body:*")
+                wiki_body(route,container_markup_begin,container_markup_end,container_markup_close ).each do |one_element|
                   write_out_array.push one_element
                 end
                 write_out_array.push ""
@@ -500,7 +532,7 @@ module Grape
       return nil
     end
 
-    alias :create_ppt_doc :create_redmine_wiki_doc
+    alias :create_ppt_doc :create_wiki_doc
 
   end
 end
