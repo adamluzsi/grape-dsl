@@ -291,6 +291,8 @@ module Grape
               container_markup_end=   "\">"
               container_markup_close= "</code></pre>"
 
+              toc_mark= "\n{{>toc}}\n"
+
             end
 
           when "github","wiki","md"
@@ -312,6 +314,7 @@ module Grape
               container_markup_begin= "```"
               container_markup_end=   ""
               container_markup_close= "```"
+              toc_mark= ""
 
             end
 
@@ -325,32 +328,20 @@ module Grape
       # site name
       begin
         write_out_array = Array.new
-        write_out_array.push "#{hheader}Database Rest Control Layer Documentation\n"
-        write_out_array.push "#{mheader}REST application routes:\n"
+        write_out_array.push "#{hheader}#{$0} REST Interface Documentation\n\n"
       end
-
 
       # description
       begin
-        write_out_array.push  "#{sheader}this is the documentation for #{$0} rest calls\n\n"+
-                                  "  the main function is to create a control layer to the database,\n"+
-                                  "with interactive commands, that can handle multiple way from ask requests,\n"+
-                                  "like regexp search by string, or different parameters for an array ask,\n"+
-                                  "relation connection handle.\n\n"+
-                                  " The calls input are the parameters, the description tells what does it do,\n"+
-                                  "like read from db, create in the db or update in the db by xy params, and how.\n"
-
         args[:desc_files].each do |extra_desc_file_path|
           write_out_array.push "#{sheader}#{extra_desc_file_path.split(File::Separator).last.split('.')[0].downcase.capitalize}\n"
-          write_out_array.push "<pre>"
-          write_out_array.push File.open(extra_desc_file_path,"r").read
-          write_out_array.push "</pre>\n"
+          write_out_array.push " "+File.open(extra_desc_file_path,"r").read
         end
       end
 
       # table of contents
       begin
-        write_out_array.push "\n{{>toc}}\n"
+        write_out_array.push toc_mark
       end
 
       # classes array
