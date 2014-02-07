@@ -331,8 +331,10 @@ module Grape
       # description
       begin
         args[:desc_files].each do |extra_desc_file_path|
-          write_out_array.push "#{sheader}#{extra_desc_file_path.split(File::Separator).last.split('.')[0].camelcase}\n\n"
-          write_out_array.push " "+File.open(extra_desc_file_path,"r").read
+
+          write_out_array.push "#{sheader}#{extra_desc_file_path.split(File::Separator).last.split('.')[0].camelcase}\n"
+          write_out_array.push " "+File.open(extra_desc_file_path,"r").read+"\n"
+
         end
       end
 
