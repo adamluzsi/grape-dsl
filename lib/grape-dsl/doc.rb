@@ -243,15 +243,12 @@ module Grape
         end
 
         args[:desc_files] ||= Array.new
-        if !args[:desc_files].nil? && args[:desc_files].class != Array
-          args[:desc_files]= Array.new.push(args[:desc_files])
-        end
 
         [:desc,:desc_file,:extra_desc_file].each do |one_key|
-          unless args[one_key].nil?
-            args[:desc_files].push args[one_key]
-            args.delete one_key
-          end
+
+          args[:desc_files] += args[(one_key.to_s+"s").to_sym]  if args[(one_key.to_s+"s").to_sym].class  == Array
+          args[:desc_files].push(args[one_key])                 if args[one_key].class                    == String
+
         end
 
         args[:type] ||= args[:doc_type]
@@ -334,7 +331,7 @@ module Grape
       # description
       begin
         args[:desc_files].each do |extra_desc_file_path|
-          write_out_array.push "#{sheader}#{extra_desc_file_path.split(File::Separator).last.split('.')[0].downcase.capitalize}\n"
+          write_out_array.push "#{sheader}#{extra_desc_file_path.split(File::Separator).last.split('.')[0].camelcase}\n"
           write_out_array.push " "+File.open(extra_desc_file_path,"r").read
         end
       end
