@@ -11,11 +11,14 @@ module Grape
     class << self
 
 
-      # Args description
+      # Args will be seperated by they class type
       # string = path part, will be joined with "/"
       # hash   = options element
       # Class  = target class
       # Symbol = method name
+      # Proc   = These procs will be called with the binding of GrapeEndpoint,
+      #          so params and headers Hash::Mash will be allowed to use
+      #          they will run BEFORE the method been called, so ideal for auth stuffs
       #
       # Array  = This is for argument pre parsing, like when you use "hash" and the input will be a json
       #
@@ -27,16 +30,17 @@ module Grape
       # looks like this:
       #   mount_method TestClass, :test_method, "funny_path",:GET
       #
-      # you can give hash options just like to any othere get,post put delete etc methods, it will work
+      # you can give hash options just like to any other get,post put delete etc methods, it will work
       #
       def mount_method *args
 
-        options     =  Hash[*args.extract_class!(Hash)]
-        path_name   = args.extract_class!(String).join('/')
-        class_name  = args.extract_class!(Class)[0]
+        options      =  Hash[*args.extract_class!(Hash)]
+        path_name    = args.extract_class!(String).join('/')
+        class_name   = args.extract_class!(Class)[0]
+        before_procs = args.extract_class!(Proc)
 
-        tmp_array   = args.extract_class!(Array)
-        adapter_opt = Hash.new
+        tmp_array    = args.extract_class!(Array)
+        adapter_opt  = Hash.new
 
         tmp_array.each do |array_obj|
           if array_obj.count == 2
@@ -44,8 +48,8 @@ module Grape
           end
         end
 
-        method_name = nil
-        rest_method = nil
+        method_name  = nil
+        rest_method  = nil
 
         args.extract_class!(Symbol).each do |element|
           if element.to_s == element.to_s.downcase
@@ -57,6 +61,10 @@ module Grape
 
         rest_method ||= "get"
         method_obj   =  class_name.method(method_name).clone
+
+        if path_name == String.new
+          path_name= method_name.to_s
+        end
 
 
         params do
@@ -105,7 +113,12 @@ module Grape
             end
           }-[nil])
 
+          before_procs.each do |proc_obj|
+            proc_obj.call_with_binding self.binding?
+          end
+
           method_obj.call(*method_arguments)
+
         end
 
 
