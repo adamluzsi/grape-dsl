@@ -21,5 +21,6 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "loader"
   spec.add_dependency "grape"
+  spec.add_dependency "bindless"
 
 end
