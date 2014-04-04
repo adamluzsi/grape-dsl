@@ -1,13 +1,11 @@
 #encoding: UTF-8
-module Grape
-  module DSL
+module GrapeDSL
 
-    require 'procemon'
-    require 'grape'
-    require 'json'
-    require 'yaml'
+  require 'procemon'
+  require 'grape'
+  require 'json'
+  require 'yaml'
 
-    require_relative_directory 'grape-dsl'
+  require_relative_directory 'grape-dsl'
 
-  end
 end

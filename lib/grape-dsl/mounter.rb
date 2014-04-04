@@ -1,21 +1,15 @@
 # this is super if you want CORS with Grape
 # This is a plugin for Mongoid
 # models rest layer generate
-module Grape
-  # The API class is the primary entry point for
-  # creating Grape APIs.Users should subclass this
-  # class in order to build an API.
-
-  class API
-
-    class << self
-
+module GrapeDSL
+  module Extend
+    module Mounter
 
       # Args will be seperated by they class type
       # string = path part, will be joined with "/"
-      # hash   = options element
+      # hash   = grape options element
       # Class  = target class
-      # Symbol = method name
+      # Symbol = method name / REST METHOD NAME
       # Proc   = These procs will be called with the binding of GrapeEndpoint,
       #          so params and headers Hash::Mash will be allowed to use
       #          they will run BEFORE the method been called, so ideal for auth stuffs
@@ -27,8 +21,14 @@ module Grape
       #
       # ---------------
       #
-      # looks like this:
-      #   mount_method TestClass, :test_method, "funny_path",:GET
+      # looks like this with FULL POWER:
+      #   mount_method :GET,
+      #                TestClass,
+      #                :test_method,
+      #                "funny_path_first_part",
+      #                "funny_path_second_part",
+      #                [:arg_hello,:json],
+      #                Proc{ authorize_instance_method_from_grape_endpoint }
       #
       # you can give hash options just like to any other get,post put delete etc methods, it will work
       #
@@ -93,7 +93,6 @@ module Grape
 
         end
 
-
         __send__(rest_method,path_name,options) do
 
 
@@ -124,6 +123,9 @@ module Grape
 
       end
 
+
     end
   end
 end
+
+Grape::API.__send__ :extend, ::GrapeDSL::Extend::Mounter
