@@ -16,7 +16,7 @@ module GrapeDSL
 
   require 'grape-dsl/doc'
   require 'grape-dsl/dsl'
-  #require 'grape-dsl/ept'
+  require 'grape-dsl/ace'
   require 'grape-dsl/mnt'
 
 end
