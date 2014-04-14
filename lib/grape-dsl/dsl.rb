@@ -1,5 +1,4 @@
 #encoding: UTF-8
-
 module GrapeDSL
   module Extend
 
@@ -47,11 +46,9 @@ module GrapeDSL
           end
 
           # mount components
-          begin
-            Grape::API.subclasses.each do |component|
-              unless exception.include?(component)
-                mount(component)
-              end
+          Grape::API.classes.each do |component|
+            unless exception.include?(component)
+              mount(component)
             end
           end
 
@@ -63,8 +60,8 @@ module GrapeDSL
         def console_write_out_routes
 
           $stdout.puts "\n\nREST::API ROUTES:"
-          self.routes.map do |route|
-            $stdout.puts "\t#{route.route_method}","#{route.route_path}"
+          self.routes.each do |route|
+            $stdout.puts "#{route.route_method}","\t#{route.route_path}\n---\n"
           end
 
           return nil

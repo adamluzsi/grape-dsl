@@ -1,11 +1,22 @@
 #encoding: UTF-8
 module GrapeDSL
 
-  require 'procemon'
+  #require 'bindless'
+  #require 'procemon'
+  #require 'mpatch'
+
+  require 'mpatch/module'
+  require 'mpatch/method'
+  MPatch.patch!
+
   require 'grape'
+
   require 'json'
   require 'yaml'
 
-  require_relative_directory 'grape-dsl'
+  require 'grape-dsl/doc'
+  require 'grape-dsl/dsl'
+  require 'grape-dsl/ept'
+  require 'grape-dsl/mnt'
 
 end
