@@ -1,52 +1,3 @@
-
-class Array
-  def convert_all_value_to_s
-
-    self.count.times do |index|
-
-      case self[index].class.to_s.downcase
-
-        when "hash"
-          self[index].convert_all_value_to_s
-
-        when "array"
-          self[index].convert_all_value_to_s
-
-        else
-          self[index]= self[index].to_s
-
-
-      end
-
-    end
-
-    return self
-  end
-end
-class Hash
-  def convert_all_value_to_s
-
-    self.each do |key,value|
-
-      case value.class.to_s.downcase
-
-        when "hash"
-          value.convert_all_value_to_s
-
-        when "array"
-          value.convert_all_value_to_s
-
-        else
-          self[key]= value.to_s
-
-      end
-
-    end
-
-    return self
-  end
-end
-
 module GrapeDSL
   module Extend
     module Doc
@@ -57,6 +8,8 @@ module GrapeDSL
 
       # helpers for doc generation
       def wiki_body(route,wrapper_begin,wrapper_end,wrapper_close)
+
+        require 'grape-dsl/doc_mp'
 
         description_key= :body
         tmp_array= Array.new()
@@ -296,12 +249,12 @@ module GrapeDSL
                 isym= "_"
 
                 htsym= "* "
-                mtsym= htsym[0]*2 +" "
-                stsym= htsym[0]*3 +" "
+                mtsym= "  * "
+                stsym= "    * "
 
-                hheader= "# "
-                mheader= hheader[0]*2 +" "
-                sheader= hheader[0]*3 +" "
+                hheader= "## "
+                mheader= "### "
+                sheader= "#### "
 
                 container_markup_begin= "```"
                 container_markup_end=   ""

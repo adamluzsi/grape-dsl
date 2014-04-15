@@ -20,9 +20,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   #spec.add_dependency "bindless"
-
-  spec.add_dependency "mpatch"
+  spec.add_dependency "mpatch", '>= 2.8.0'
   spec.add_dependency "grape"
-
 
 end

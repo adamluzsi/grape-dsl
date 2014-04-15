@@ -5,29 +5,32 @@ module GrapeDSL
   module Extend
     module Mounter
 
-      # Args will be seperated by they class type
-      # string = path part, will be joined with "/"
-      # hash   = grape options element
-      # Class  = target class
-      # Symbol = method name / REST METHOD NAME
-      # Proc   = These procs will be called with the binding of GrapeEndpoint,
-      #          so params and headers Hash::Mash will be allowed to use
-      #          they will run BEFORE the method been called, so ideal for auth stuffs
+      # options   = grape options element
+      # class     = target class
+      # rest      = method name / REST METHOD NAME
+      # prc       = These procs will be called with the binding of GrapeEndpoint,
+      #             so params and headers Hash::Mash will be allowed to use
+      #             they will run BEFORE the method been called, so ideal for auth stuffs
       #
-      # Array  = This is for argument pre parsing, like when you use "hash" and the input will be a json
+      # args      = This is for argument pre parsing,
+      #             like when you use "hash" type for an argument
+      #             and the input should be sent as json, but you want it to be preparsed when the method receive
       #
-      # simple use case: [:hello,:json],[:sup,:yaml]
+      #      #> method hello parameter will be preparsed before passing to method
+      #      simple use case => args: [:hello,:json],[:sup,:yaml]
+      #                                     or
+      #                         args: { hello: :json, sup: :yaml }
       #
       #
       # ---------------
       #
       # looks like this with FULL POWER:
-      #   mount_method rest: :GET,
-      #                class: TestClass,
-      #                method: :test_method,
-      #                path: "funny_path/okey",
-      #                args: [[:arg_hello,:json]],#> or args: { arg_hello: :json }
-      #                Proc{ authorize_instance_method_from_grape_endpoint }
+      #   mount_method rest:    :get,
+      #                class:   TestClass,
+      #                method:  :test_method,
+      #                path:    "funny_path/okey",
+      #                args:    [[:arg_hello,:json]],#> or args: { arg_hello: :json }
+      #                prc:     Proc{ authorize_instance_method_from_grape_endpoint }
       #
       # you can give hash options just like to any other get,post put delete etc methods, it will work
       #
@@ -118,7 +121,7 @@ module GrapeDSL
 
               *opts[:method].parameters.map { |element|
 
-                if !params[element[1]].nil?
+                unless params[element[1]].nil?
 
                   # parse if requested
                   case opts[:args][element[1]].to_s
