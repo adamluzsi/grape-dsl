@@ -4,31 +4,57 @@ module GrapeDSL
 
     module APIMNT
 
+      class Description
+
+        def initialize opts={}
+          raise unless opts.class <= ::Hash
+          opts.each{|k,v| self.__send__("#{k}=",v) }
+        end
+
+        def [] sym
+          self.__send__ sym.to_s
+        end
+
+        def []= sym,value
+          self.__send__ "#{sym.to_s}=",value
+        end
+
+        attr_accessor :description,:body,:content_type
+        alias desc= description=
+        alias desc  description
+        alias type= content_type=
+        alias type  content_type
+
+        def value
+          {description: description,content_type: content_type,body: body}
+        end
+
+      end
+
       # defaults
       # desc -> description for path
       # body -> return body from the call
       # convent_type -> real content type
-      def description
+      def description(*args)
 
-        if desc.class <= String
-          tmp_string= desc
-          desc ::Hashie::Mash.new
-          desc[:desc]= tmp_string
-        end
+        if desc.class != ::GrapeDSL::Extend::APIMNT::Description
 
-        unless desc.class <= Hash
-          desc ::Hashie::Mash.new
-        end
+          var= ::GrapeDSL::Extend::APIMNT::Description.new(*args)
 
-        unless self.content_types.keys.empty?
+          unless self.content_types.keys.empty?
 
-          content_type_name= nil
-          [:json,:xml,:txt].each do |element|
-            if self.content_types.keys.include? element
-              content_type_name ||= element.to_s.upcase
+            content_type_name= nil
+            [:json,:xml,:txt].each do |element|
+              if self.content_types.keys.include? element
+                content_type_name ||= element.to_s.upcase
+              end
             end
+            var.content_type= content_type_name
+
           end
-          desc[:convent_type] ||= content_type_name
+
+          var.desc= desc.to_s
+          desc var
 
         end
 

@@ -92,6 +92,11 @@ In the default usecase, the mount process will read the method source for docume
                         path: "hello_world",
                         args: [[:opts,:yaml],[:args,:json]]
 
+        #> or
+
+        mount_method    Test.method(:test),
+                        args: [[:opts,:yaml],[:args,:json]]
+
 
     end
 

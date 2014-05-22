@@ -34,116 +34,125 @@ module GrapeDSL
       #
       # you can give hash options just like to any other get,post put delete etc methods, it will work
       #
-      def mount_method opts= {}, &block
+      def mount_method *args, &block
 
-        unless opts.class <= Hash
-          raise ArgumentError, "invalid input, must be Hash like obj"
-        end
+        # process params && validations
+        begin
 
-        # required
-        opts[:method]       ||= opts[:m]        || raise(ArgumentError,"missing method input(:method)")
+          opts= args.select{|e|(e.class <= ::Hash)}.reduce( {}, :merge! )
 
-        # optional
-        opts[:options]      ||= opts[:o]        || {}
-        opts[:rest_method]  ||= opts[:r]        || opts[:protocol]    || opts[:rest] || opts[:rm] || :get
-        opts[:proc]         ||= opts[:h]        || opts[:prc]         || opts[:hook] || block || Proc.new{}
-        opts[:path]         ||= opts[:p]        || opts[:method].name
-        opts[:args]         ||= opts[:a]        || opts[:arg]         || {}
+          # required
+          opts[:method]       ||= opts[:m]        || args.select{|e|(e.class <= ::Method)}[0] || raise(ArgumentError,"missing method input(:method)")
+          unless [::String,::Symbol].select{|klass|(opts[:method].class <= klass)}.empty?
 
-        if opts[:method].class <= String || opts[:method].class <= Symbol
+            opts[:class]  ||= opts[:c]  ||  opts[:module] ||  raise(ArgumentError,"missing method input(:method)")
+            opts[:method]   = opts[:class].method(opts[:method])
 
-          opts[:class]  ||= opts[:c]  ||  opts[:module] ||  raise(ArgumentError,"missing method input(:method)")
-          opts[:method]   = opts[:class].method(opts[:method])
+          end
 
-        end
+          # optional
+          opts[:options]      ||= opts[:o]        || {}
+          opts[:rest_method]  ||= opts[:r]        || opts[:protocol]    || opts[:rest] || opts[:rm] || :get
+          opts[:proc]         ||= opts[:h]        || opts[:prc]         || opts[:hook] || block || Proc.new{}
+          opts[:path]         ||= opts[:p]        || opts[:method].name
+          opts[:args]         ||= opts[:a]        || opts[:arg]         || {}
 
-        if opts[:args].class <= Array
+          if opts[:args].class <= Array
 
-          tmp_hash  = Hash.new
-          opts[:args].each do |array_obj|
-            if array_obj.count == 2
-              tmp_hash[array_obj[0]]= array_obj[1]
+            tmp_hash  = Hash.new
+            opts[:args].each do |array_obj|
+              if array_obj.size == 2 && array_obj.class <= ::Array
+                tmp_hash[array_obj[0]]= array_obj[1]
+              end
             end
+            opts[:args]= tmp_hash
+
           end
-          opts[:args]= tmp_hash
+
+          {
+
+              options:      ::Hash,
+              rest_method:  ::Symbol,
+              proc:         ::Proc,
+              path:         ::String,
+              args:         ::Hash,
+              method:       ::Method
+
+          }.each { |key,type|
+            unless opts[key].class <= type
+              raise(ArgumentError,"invalid #{key} value, must instance of an inherited class from #{type}")
+            end
+          }
+
+          opts[:rest_method]= opts[:rest_method].to_s.downcase.to_sym
+          unless [:get,:post,:put,:delete,:options].include?(opts[:rest_method])
+            raise(ArgumentError,"invalid rest method: #{opts[:rest_method]}")
+          end
 
         end
 
-        {
+        # do grape command generation
+        begin
+          desc opts[:method].get_comments
 
-            options:      Hash,
-            rest_method:  Symbol,
-            proc:         Proc,
-            path:         String,
-            args:         Hash,
-            method:       Method
+          params do
 
-        }.each { |key,type|
-          unless opts[key].class <= type
-            raise(ArgumentError,"invalid #{key} value, must instance of an inherited class from #{type}")
-          end
-        }
+            opts[:method].parameters.each do |array_obj|
 
-        opts[:rest_method]  = opts[:rest_method].to_s.downcase.to_sym
+              case array_obj[0]
 
-        desc opts[:method].get_comments
+                when :req
+                  requires array_obj[1]
+                when :opt
+                  optional array_obj[1]
+                when :rest
+                  optional array_obj[1],
+                           type: ::Array
 
-        params do
+                #when :block
+                #  optional array_obj[1],
+                #           type: String,
+                #           desc: "Ruby code to be used"
 
-          opts[:method].parameters.each do |array_obj|
 
-            case array_obj[0]
-
-              when :req
-                requires array_obj[1]
-              when :opt
-                optional array_obj[1]
-              when :rest
-                optional array_obj[1],
-                         type: Array
-
-              #when :block
-              #  optional array_obj[1],
-              #           type: String,
-              #           desc: "Ruby code to be used"
-
+              end
 
             end
 
           end
 
-        end
+          self.__send__(opts[:rest_method], opts[:path], opts[:options]) do
 
-        self.__send__(opts[:rest_method], opts[:path], opts[:options]) do
+            opts[:proc].call_with_binding self.binding?
+            opts[:method].call(
 
-          opts[:proc].call_with_binding self.binding?
-          opts[:method].call(
+                *opts[:method].parameters.map { |element|
 
-              *opts[:method].parameters.map { |element|
+                  unless params[element[1]].nil?
 
-                unless params[element[1]].nil?
+                    # parse if requested
+                    case opts[:args][element[1]].to_s
+                      when 'json'
+                        params[element[1]]= JSON.parse(params[element[1]])
 
-                  # parse if requested
-                  case opts[:args][element[1]].to_s
-                    when 'json'
-                      params[element[1]]= JSON.parse(params[element[1]])
+                      when 'yaml', 'yml'
+                        params[element[1]]= YAML.parse(params[element[1]])
 
-                    when 'yaml', 'yml'
-                      params[element[1]]= YAML.parse(params[element[1]])
+                    end
+
+                    # add new element
+                    params[element[1]]
 
                   end
 
-                  # add new element
-                  params[element[1]]
+                }.compact
 
-                end
+            )
 
-              }.compact
-
-          )
-
+          end
         end
 
+        return nil
 
       end
 
