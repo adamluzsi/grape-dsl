@@ -37,7 +37,8 @@ module GrapeDSL
       # convent_type -> real content type
       def description(*args)
 
-        if desc.class != ::GrapeDSL::Extend::APIMNT::Description
+        @last_description ||= {}
+        unless @last_description[:desc].class == ::GrapeDSL::Extend::APIMNT::Description
 
           var= ::GrapeDSL::Extend::APIMNT::Description.new(*args)
 
@@ -49,16 +50,17 @@ module GrapeDSL
                 content_type_name ||= element.to_s.upcase
               end
             end
-            var.content_type= content_type_name
+
+            var.content_type= content_type_name if var.content_type.nil?
 
           end
 
           var.desc= desc.to_s
-          desc var
+          @last_description[:desc]= var
 
         end
 
-        return desc
+        return @last_description[:desc]
 
       end
 
