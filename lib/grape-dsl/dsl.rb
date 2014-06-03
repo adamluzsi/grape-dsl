@@ -67,39 +67,30 @@ module GrapeDSL
       # mount all the rest api classes that is subclass of the Grape::API
       # make easy to manage
 
-      def mount_api opts= {}
+      def mount_by opts= {}
 
-        unless opts.class <= Hash
-          raise ArgumentError,"invalid option object given, must be hash like!"
-        end
+        raise unless opts.class <= ::Hash
 
-        opts[:ex] ||= opts[:except]   || opts[:exception] || opts[:e] || []
-        opts[:in] ||= opts[:include]  || opts[:inclusion] || opts[:i] || []
+        opts[:class]  ||= opts[:klass]    || opts[:k]         || opts[:c] || Grape::API
+        opts[:ex]     ||= opts[:except]   || opts[:exception] || opts[:e] || []
+        opts[:in]     ||= opts[:include]  || opts[:inclusion] || opts[:i] || []
 
         [:ex,:in].each{|sym| (opts[sym]=[opts[sym]]) unless opts[sym].class <= Array }
 
         # mount components
-        Grape::API.inherited_by.each do |component|
-
-          unless opts[:ex].include?(component) || self == component
-            mount(component)
-          end
-
+        opts[:class].inherited_by.each do |component|
+          mount(component) unless opts[:ex].include?(component) || self == component
         end
 
-        opts[:in].each{|cls| self.mount(cls) }
+        opts[:in].each{ |klass| self.mount(klass) }
 
         return nil
 
       end
 
-      alias :mount_apis :mount_api
-
       def mount_subclasses(*exception)
-        mount_api ex: exception
-      end
-
-      alias :mount_classes  :mount_subclasses
+        mount_by ex: exception
+      end;alias :mount_classes  :mount_subclasses
 
       # write out to the console the class routes
       def console_write_out_routes
