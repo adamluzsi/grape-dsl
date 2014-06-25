@@ -142,3 +142,125 @@ here is an example for the use
     end
 
 ```
+
+### Documentation
+ 
+a simple but useful documentation generation way
+
+```ruby
+
+
+    class HelloApi < Grape::API
+
+        #> api call description
+            description.desc= "simple api call"
+        
+        #> return body for the documentation
+        description.body= {"String"=>"String"}
+    
+        #> or type
+        description.content_type= 'JSON'
+        #> params for the call
+        params do
+          requires :something, type: String, desc: "Some string that required"
+        end
+        #> actual get route generation
+        get 'hello' do
+          {"hello"=>"world"}
+        end
+            
+    end
+    
+    
+    if ARGV.include?('--generate_documentation)
+    
+      Grape.create_wiki_doc path: (File.join(Dir.pwd,"README.md")),
+                            desc_files: Dir.glob(File.join Dir.pwd,"doc","*").select{|p| !File.directory?(p) },
+                            type: :github
+    
+    end
+
+```
+
+This will produce the following content in a README.md file
+-----------------------------------------------------------
+        
+         
+## Request: /hello(.:format) call: get part
+
+### Request description
+* simple api call
+
+### request
+
+* *method:*    GET
+* *path:*      /hello(.:format)
+* *headers:*   
+  * application/json
+  * application/text
+
+
+* _*Parameters*_
+  * _something_
+    * required: true
+    * type: String
+    * desc: Some string that required
+
+
+
+### response
+
+#### *body:*
+```JSON
+{
+ "String":"String"
+}
+```
+
+
+### response in case of failure
+
+* *Internal Server Error:500*
+
+----
+         
+
+or in plain:
+                          
+    ## Request: /hello(.:format) call: get part
+    
+    ### Request description
+    * simple api call
+    
+    ### request
+    
+    * *method:*    GET
+    * *path:*      /hello(.:format)
+    * *headers:*   
+      * application/json
+      * application/text
+    
+    
+    * _*Parameters*_
+      * _something_
+        * required: true
+        * type: String
+        * desc: Some string that required
+    
+    
+    
+    ### response
+    
+    #### *body:*
+    ```JSON
+    {
+     "String":"String"
+    }
+    ```
+    
+    
+    ### response in case of failure
+    
+    * *Internal Server Error:500*
+    
+    ----

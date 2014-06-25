@@ -3,17 +3,17 @@ module GrapeDSL
   module EXT
 
     module ArrayMP
-      def convert_all_value_to_s
+      def convert_all_value_to_grape_dsl_format
 
         self.count.times do |index|
 
-          case self[index].class.to_s.downcase
+          case true
 
-            when "hash"
-              self[index].convert_all_value_to_s
+            when self[index].class <= Hash
+              self[index].convert_all_value_to_grape_dsl_format
 
-            when "array"
-              self[index].convert_all_value_to_s
+            when self[index].class <= Array
+              self[index].convert_all_value_to_grape_dsl_format
 
             else
               self[index]= self[index].to_s
@@ -28,17 +28,17 @@ module GrapeDSL
     end
 
     module HashMP
-      def convert_all_value_to_s
+      def convert_all_value_to_grape_dsl_format
 
         self.each do |key,value|
 
-          case value.class.to_s.downcase
+          case true
 
-            when "hash"
-              value.convert_all_value_to_s
+            when value.class <= Hash
+              value.convert_all_value_to_grape_dsl_format
 
-            when "array"
-              value.convert_all_value_to_s
+            when value.class <= Array
+              value.convert_all_value_to_grape_dsl_format
 
             else
               self[key]= value.to_s

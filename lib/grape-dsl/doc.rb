@@ -2,10 +2,6 @@ module GrapeDSL
   module Extend
     module Doc
 
-      def syntax_highlight target,wrapper_begin,wrapper_end
-        return "#{wrapper_begin}#{target}#{wrapper_end}"
-      end
-
       # helpers for doc generation
       def wiki_body(route,wrapper_begin,wrapper_end,wrapper_close)
 
@@ -21,12 +17,12 @@ module GrapeDSL
         #  debugger
         #end
 
-        case route.route_description.class.to_s.downcase
+        case true
 
-          when "string"
+          when route.route_description.class <= ::String
             params= route.route_params
 
-          when "hash"
+          when route.route_description.class <= ::Hash
 
             if !route.route_description[:content_type].nil?
               content_type= route.route_description[:content_type]
@@ -40,7 +36,7 @@ module GrapeDSL
               evalue= "value"
             end
 
-          when "nilclass"
+          when route.route_description.class <= ::NilClass
             params= route.route_params
             params ||= "no return"
             content_type= "TXT"
@@ -51,9 +47,9 @@ module GrapeDSL
 
         end
 
-        case params.class.to_s.downcase
+        case true
 
-          when "hash"
+          when params.class <= ::Hash
 
             if params == route.route_params
               tmp_hash= Hash.new
@@ -63,9 +59,9 @@ module GrapeDSL
               params= tmp_hash
             end
 
-            params = params.convert_all_value_to_s
+            params = params.convert_all_value_to_grape_dsl_format
 
-          when "class"
+          when params.class <= ::Class
             begin
               if params.to_s.include? '::'
                 if params.to_s.downcase.include? 'boolean'
@@ -76,7 +72,7 @@ module GrapeDSL
               content_type= "TXT"
             end
 
-          when "string"
+          when params.class <= ::String
             content_type= "TXT"
 
           else
@@ -93,9 +89,7 @@ module GrapeDSL
           when "json"
             begin
 
-
-
-              tmp_array.push syntax_highlight(content_type.to_s,wrapper_begin,wrapper_end)
+              tmp_array.push [wrapper_begin,content_type.to_s,wrapper_end].join
 
               require "json"
 
@@ -327,22 +321,35 @@ module GrapeDSL
                 # create request description
                 begin
                   write_out_array.push("\n"+(uni_tab*1)+"#{mheader}Request description")
-                  case route.route_description.class.to_s.downcase
+                  case true
 
-                    when "string"
+                    when route.route_description.class <= String
                       route.route_description.each_line do |one_line|
                         write_out_array.push((uni_tab*2)+htsym+one_line.chomp)
                       end
 
-                    when "hash"
+                    when route.route_description.class <= Hash
                       begin
-                        sym_to_find= :desc
-                        if route.route_description[sym_to_find].nil?
-                          sym_to_find= :description
+
+                        description_msg = nil
+
+                        [:d,:desc,:description].each do |sym|
+                          description_msg ||= route.route_description[sym]
                         end
-                        route.route_description[sym_to_find].each_line do |one_line|
+
+                        if description_msg.class <= String
+                          description_msg= [*description_msg.split("\n")]
+                        end
+
+                        description_msg ||= "No description available for this path"
+                        description_msg= [*description_msg]
+
+                        puts description_msg.inspect
+
+                        description_msg.each do |one_line|
                           write_out_array.push((uni_tab*2)+htsym+one_line.chomp)
                         end
+
                       end
 
 
@@ -407,6 +414,7 @@ module GrapeDSL
                   write_out_array.push("\n#{mheader}response\n")
                 end
 
+                #> TODO make better implementation for others to use
                 #create route content_type
                 begin
                   if !Grape::Endpoint.config_obj.nil?
@@ -420,7 +428,7 @@ module GrapeDSL
                     write_out_array.push ""
 
                   end
-                end
+                end if Grape::Endpoint.respond_to?(:config_obj) && Grape::Endpoint.respond_to?(:header_config_obj)
 
                 # create response bodies
                 begin
