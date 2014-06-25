@@ -4,64 +4,22 @@ module GrapeDSL
 
     module APIMNT
 
-      class Description
-
-        def initialize opts={}
-          raise unless opts.class <= ::Hash
-          opts.each{|k,v| self.__send__("#{k}=",v) }
-        end
-
-        def [] sym
-          self.__send__ sym.to_s
-        end
-
-        def []= sym,value
-          self.__send__ "#{sym.to_s}=",value
-        end
-
-        attr_accessor :description,:body,:content_type
-        alias desc= description=
-        alias desc  description
-        alias type= content_type=
-        alias type  content_type
-
-        def value
-          {description: description,content_type: content_type,body: body}
-        end
-
-      end
-
       # defaults
       # desc -> description for path
       # body -> return body from the call
       # convent_type -> real content type
-      def description(*args)
+      def description(opts={})
 
         @last_description ||= {}
-        unless @last_description[:desc].class == ::GrapeDSL::Extend::APIMNT::Description
-
-          var= ::GrapeDSL::Extend::APIMNT::Description.new(*args)
-
-          unless self.content_types.keys.empty?
-
-            content_type_name= nil
-            [:json,:xml,:txt].each do |element|
-              if self.content_types.keys.include? element
-                content_type_name ||= element.to_s.upcase
-              end
-            end
-
-            var.content_type= content_type_name if var.content_type.nil?
-
-          end
-
-          var.desc= desc.to_s
-          @last_description[:desc]= var
-
+        unless @last_description[:description].class == Hashie::Mash
+          @last_description[:description]= Hashie::Mash.new(opts.merge(desc: @last_description[:desc]))
         end
+        return @last_description[:description]
 
-        return @last_description[:desc]
+      end
 
+      def description= obj
+        self.description.desc= obj
       end
 
       # mount all the rest api classes that is subclass of the Grape::API
