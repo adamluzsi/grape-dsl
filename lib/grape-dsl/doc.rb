@@ -337,14 +337,20 @@ module GrapeDSL
                           description_msg ||= route.route_description[sym]
                         end
 
-                        if description_msg.class <= String
-                          description_msg= [*description_msg.split("\n")]
-                        end
-
                         description_msg ||= "No description available for this path"
                         description_msg= [*description_msg]
 
-                        puts description_msg.inspect
+                        description_msg.dup.each do |element|
+                          next unless element.include?("\n")
+
+                          index_n= description_msg.index(element)
+                          description_msg.delete(element)
+                          new_elements= element.split("\n")
+                          new_elements.size.times do |counter_n|
+                            description_msg.insert(index_n + counter_n - 1, new_elements[counter_n - 1] )
+                          end
+
+                        end
 
                         description_msg.each do |one_line|
                           write_out_array.push((uni_tab*2)+htsym+one_line.chomp)
