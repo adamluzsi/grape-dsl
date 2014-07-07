@@ -83,38 +83,40 @@ module GrapeDSL
 
         end
 
-        content_type ||= "TXT"
-        case content_type.to_s.downcase
+        content_type ||= 'TXT'
+        content_type = content_type.keys if content_type.class <= ::Hash
 
-          when "json"
-            begin
+        [*content_type].each do |one_content_type|
 
-              tmp_array.push [wrapper_begin,content_type.to_s,wrapper_end].join
+          case one_content_type.to_s.downcase
 
-              require "json"
+            when 'json'
+              begin
 
-              formatted_string= params.to_json
+                tmp_array.push [wrapper_begin,one_content_type.to_s,wrapper_end].join
 
-              {
-                  "{" => "{\n",
-                  "}" => "\n}",
-                  "," => ",\n"
-              }.each do |from,to|
-                formatted_string.gsub!(from,to)
+                require 'json'
+
+                formatted_string= params.to_json
+
+                {
+                    '{' => "{\n",
+                    '}' => "\n}",
+                    ',' => ",\n"
+                }.each do |from,to|
+                  formatted_string.gsub!(from,to)
+                end
+
+                formatted_string.gsub!(/^"/," \"")
+                tmp_array.push formatted_string
+                tmp_array.push wrapper_close
+
               end
 
-              formatted_string.gsub!(/^"/," \"")
-
-              tmp_array.push formatted_string
-              tmp_array.push wrapper_close
-            end
-
-          when "txt"
-            begin
+            when "txt"
               tmp_array.push(params.inspect)
-            end
 
-
+          end
 
         end
 

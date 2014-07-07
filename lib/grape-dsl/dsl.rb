@@ -12,7 +12,13 @@ module GrapeDSL
 
         @last_description ||= {}
         unless @last_description[:description].class == Hashie::Mash
-          @last_description[:description]= Hashie::Mash.new(opts.merge(desc: @last_description[:desc]))
+
+          @last_description[:description]= Hashie::Mash.new(
+              opts.merge(
+                  desc: @last_description[:desc],
+                  content_type: self.content_types
+              )
+          )
         end
         return @last_description[:description]
 
@@ -62,7 +68,7 @@ module GrapeDSL
       end
 
       alias :cw_routes :console_write_out_routes
-
+      alias :puts_routes :console_write_out_routes
 
     end
 
